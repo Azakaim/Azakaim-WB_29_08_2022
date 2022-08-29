@@ -92,43 +92,58 @@ namespace WildberriesComparisonTable
             new HttpWildberrise(request_relevant_url_competitor, out response_product_json_competitor, out HttpStatusCode httpStatusCode_competitor);
         }
         /// <summary>
-        /// ?Who seller ;client == true ;competitor == false ; 
+        /// ?Who seller ;client == true ;competitor == false ;
         /// </summary>
         /// <param name="who_saler"></param>
         /// <param name="dict"></param>
-        public void WriteDataExcel(bool who_saler ,Dictionary<string, string> dict, ExcelPackage myexctable, ExcelWorksheet myworksheet)
+        /// <param name="myexctable"></param>
+        /// <param name="myworksheet"></param>
+        /// <param name="price_client_all"></param>
+        /// <param name="price_competitor_all"></param>
+        /// <param name="if_need_price_difference_client"></param>
+        /// <param name="if_need_price_difference_competitor"></param>
+        public void WriteDataExcel(bool who_saler ,Dictionary<string, string> dict, ExcelPackage myexctable, ExcelWorksheet myworksheet )
         {
+            //Increment
             int i = 2;
             int j = 2;
+            //Regex for id articul
             System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"(?<=/id:).*");
+            //for comparing id articuls
             string id_product = String.Empty;
             string value_id_excel = String.Empty;
+            //List for a diffence the price
+            string price_client_num = String.Empty;
+            string price_competitor_num = String.Empty;
+    
             switch (who_saler)
             {
+                #region for Client
                 case true:
-                    foreach (var item in dict)
+                foreach (var item in dict)
+                {
+                    for(int x = 0;x < myworksheet.Dimension.Rows;x++)
                     {
-                        for(int x = 0;x < myworksheet.Dimension.Rows;x++)
+                        //Comparison of the identifier from the table and the received identifier from wildberry
+                        id_product = regex.Match(item.Key).Value;
+                        value_id_excel = myworksheet.GetValue(i, 1).ToString();
+                        if (value_id_excel == id_product)
                         {
-                            //Comparison of the identifier from the table and the received identifier from wildberry
-                            id_product = regex.Match(item.Key).Value;
-                            value_id_excel = myworksheet.GetValue(i, 1).ToString();
-                            if (value_id_excel == id_product)
-                            {
-                                //set name
-                                myworksheet.SetValue(i, 2, item.Key);
-                                //set price
-                                myworksheet.SetValue(i, 3, item.Value);
-                                i = 1;
-                                break;
-                            }
-                            else i++;
+                            //set name
+                            myworksheet.SetValue(i, 2, item.Key);
+                            //set price
+                            myworksheet.SetValue(i, 3, item.Value);
+                            i = 1;
+                            break;
                         }
-                        i++;
+                        else i++;
                     }
-                    myexctable.Save();
-                    break;
+                    i++;
+                }
+                break;
+                #endregion
 
+                #region for Competitor
                 case false:
                     foreach (var item2 in dict)
                     {
@@ -150,10 +165,10 @@ namespace WildberriesComparisonTable
                         }
                         j++;
                     }
-                    myexctable.Save(); 
                     break;
-
+                    #endregion
             }
+            myexctable.Save();//end switch
         }
     }
 }
