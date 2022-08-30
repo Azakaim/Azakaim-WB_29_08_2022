@@ -170,5 +170,102 @@ namespace WildberriesComparisonTable
             }
             myexctable.Save();//end switch
         }
+
+        public void WriteInExcelAndColorCell(ExcelPackage myexctable, ExcelWorksheet myworksheet , List<string> price_diff_procent, List<string> price_diff_rub , List<string> link_client, List<string> link_competitor)
+        {
+            //Define a regex to set red or green color in a cell
+            string price_upordown_rub = String.Empty;
+            string price_plusorminus_proc = String.Empty;
+            
+            //for calculation difference
+            int prc = 0;
+            int count_proc = 0;
+            int count_rub = 0;
+            for (int f = 2;;)
+            {
+                //set procent & price rub
+                foreach (string s in price_diff_procent)
+                {
+                    //plus or minus
+                    price_plusorminus_proc = s.Substring(0, 1);
+
+                    if (price_plusorminus_proc == "-")
+                    {
+                        //set color cell
+                        var cell = myworksheet.Cells[f, 7];
+                        cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Green);
+                        myworksheet.SetValue(f, 7, price_diff_procent.ElementAt(count_proc));
+                        f++;
+                    }
+                    else if(price_plusorminus_proc == new System.Text.RegularExpressions.Regex(@".*(?=\ %)").Match(s).Value)
+                    {
+                        //set color cell
+                        var cell = myworksheet.Cells[f, 7];
+                        cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.White);
+                        myworksheet.SetValue(f, 7, price_diff_procent.ElementAt(count_proc));
+                        f++;
+                    }
+                    else
+                    {
+                        //set color cell
+                        var cell = myworksheet.Cells[f, 7];
+                        cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Red);
+                        myworksheet.SetValue(f, 7, price_diff_procent.ElementAt(count_proc));
+                        f++;
+                    }
+                    count_proc++;
+                }
+                break;
+            }
+            for (int f = 2;;)
+            {
+                foreach (string l in price_diff_rub)
+                {
+                    //up or down
+                    price_upordown_rub = l.Split(' ')[1].Trim();
+
+                    if (price_upordown_rub == "выше")
+                    {
+                        //set color to cell
+                        var cell = myworksheet.Cells[f, 8];
+                        cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Red);
+                        myworksheet.SetValue(f, 8, price_diff_rub.ElementAt(count_rub));
+                        f++;
+                    }
+                    else if(price_upordown_rub == "равны")
+                    {
+                        //set color to cell
+                        var cell = myworksheet.Cells[f, 8];
+                        cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.White);
+                        myworksheet.SetValue(f, 8, price_diff_rub.ElementAt(count_rub));
+                        f++;
+                    }
+                    else
+                    {
+                        //set color to cell
+                        var cell = myworksheet.Cells[f, 8];
+                        cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Green);
+                        myworksheet.SetValue(f, 8, price_diff_rub.ElementAt(count_rub));
+                        f++;
+                    }
+                    count_rub++;
+                }
+                break;
+            }
+            for (int f = 2; f <= myworksheet.Dimension.Rows;f++)
+            {
+                //set link
+                myworksheet.SetValue(f, 9, link_client.ElementAt(prc));
+                myworksheet.SetValue(f, 10, link_competitor.ElementAt(prc));
+                prc++;
+            }
+            myexctable.Save();
+        }
     }
 }

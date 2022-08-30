@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using OfficeOpenXml;
 using Newtonsoft;
 using Newtonsoft.Json;
+using System.Collections.ObjectModel;
 
 namespace WildberriesComparisonTable
 {
@@ -20,18 +21,19 @@ namespace WildberriesComparisonTable
         /// <param name="myworksheet"></param>
         public void CompetitorComparing(string json_data_client_product,string json_data_competitor_product,ExcelPackage myexctable,ExcelWorksheet myworksheet)
         {
-            //for calculation difference
-            int prc = 0;
+            //For link
+            List<string> link_client = new List<string>();
+            List<string> link_competitor = new List<string>();
+            //Client
             List<string> price_client_all = new List<string>();
             List<string> price_competitor_all = new List<string>();
-            var calulation = new Comparing();
-            //Client
             var data_client = JsonConvert.DeserializeObject<Root>(json_data_client_product);
             string price_cl = String.Empty;
             string base_price_client = String.Empty;
             string name_prod_client = String.Empty;
             Dictionary<string, string> str_name_and_base_price = new Dictionary<string, string>();
             var set_data_client = new ReadAndWriteExcel();
+
             foreach (var i in data_client.data.products)
             {
                 price_cl = Convert.ToString(i.salePriceU);
@@ -67,25 +69,16 @@ namespace WildberriesComparisonTable
             List<string> sort_price_competitor_for_articul = new List<string>();
             List<string> price_diff_procent = new List<string>();
             List<string> price_diff_rub = new List<string>();
-            List<string> link_client = new List<string>();
-            List<string> link_competitor = new List<string>();
+            
             this.SortPriceByArticle(str_name_and_base_price, str_name_and_base_price_competitor, myworksheet, ref sort_price_client_for_articul, ref sort_price_competitor_for_articul,ref link_client, ref link_competitor);
 
             //call calculation method
+            var calulation = new Comparing();
             calulation.CalculationDifference(sort_price_client_for_articul, sort_price_competitor_for_articul,ref price_diff_procent,ref price_diff_rub);
-            
+
             //Set differet % % in excel
-            for (int f = 2; f <= myworksheet.Dimension.Rows; f++)
-            {
-                //set procent & price rub
-                myworksheet.SetValue(f, 7, price_diff_procent.ElementAt(prc));
-                myworksheet.SetValue(f, 8, price_diff_rub.ElementAt(prc));
-                //set link
-                myworksheet.SetValue(f, 9, link_client.ElementAt(prc));
-                myworksheet.SetValue(f, 10, link_competitor.ElementAt(prc));
-                prc++;
-            }
-            myexctable.Save();
+            set_data_client.WriteInExcelAndColorCell(myexctable, myworksheet, price_diff_procent, price_diff_rub , link_client, link_competitor);
+            
             #endregion
         }
         public void SortPriceByArticle(Dictionary<string, string> price_client_all, Dictionary<string, string> price_competitor_all, ExcelWorksheet myworksheet, ref List<string> sort_price_client_for_articul, ref List<string> sort_price_competitor_for_articul,ref List<string> link_client, ref List<string> link_competitor)
@@ -141,17 +134,23 @@ namespace WildberriesComparisonTable
                 price_competitor_num = Convert.ToInt32(price_competitor[i]);
                 if ( price_client_num > price_competitor_num)
                 {
-                    procent = 100 + ((price_client_num - price_competitor_num) / price_client_num) * 100;
+                    //calculation procent & rub
+                    procent = ((price_competitor_num - price_client_num) / price_competitor_num) * 100;
                     diff_price_rub = price_client_num - price_competitor_num;
-                    common_str_diff_price_procent = $"{Math.Round(procent,2)}% ";
+                    common_str_diff_price_procent = $"{Math.Abs(Math.Round(procent,2))}% ";
                     common_str_diff_price_rub = $"Цена выше на {diff_price_rub}руб.";
                 }
                 else if (price_client_num < price_competitor_num)
                 {
-                    procent = ((price_client_num - price_competitor_num)/ price_client_num) *100;
+                    procent = ((price_client_num - price_competitor_num) / price_client_num) *100;
                     diff_price_rub = price_competitor_num - price_client_num;
-                    common_str_diff_price_procent = $"{100 + Math.Round(procent,2)}% ";
+                    common_str_diff_price_procent = $"{Math.Round(procent,2)}% ";
                     common_str_diff_price_rub = $"Цена ниже на {diff_price_rub}руб.";
+                }
+                else 
+                {
+                    common_str_diff_price_procent = "0 %";
+                    common_str_diff_price_rub = "Цены равны";
                 }
                 price_diff_procent.Add(common_str_diff_price_procent);
                 price_diff_rub.Add(common_str_diff_price_rub);
