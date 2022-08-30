@@ -29,7 +29,7 @@ namespace WildberriesComparisonTable
         public ExcelWorksheet CreateExcelWorksheet(int workSheet)
         {
             ExcelWorksheet variable = this.MyExcelTable.Workbook.Worksheets[workSheet] ;
-            return variable ;
+            return variable ; 
         }
         public void ReadExcelAndGetJson(ExcelWorksheet MyWorkSheet, out string response_product_json_competitor, out string response_product_json_client)
         {
