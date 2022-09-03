@@ -21,9 +21,9 @@ namespace WildberriesComparisonTable
             InitializeComponent();
 
             //for top most
-            #if DEBUG
+#if DEBUG
             TopMost = false;
-            #endif
+#endif
             this.button1.Click += button1_Click1;
         }
 
@@ -34,15 +34,20 @@ namespace WildberriesComparisonTable
 
             await Task.Run(() =>
             {
-                if (checkBox1.Checked == true)
+                if (checkBox1.Checked)
                 {
-                    /*
-                    this.BasicMethod(close);
-                    */
+                    while (true)
+                    {
+                        this.BasicMethod(close);
+                        decimal pause_min = this.numericUpDown1.Value;
+                        decimal pause_max = pause_min * 60 * 1000;
+                        System.Threading.Thread.Sleep((int)pause_max);
+                    }
                 }
                 else
                 {
-                    this.BasicMethod(true);
+                    close = true;
+                    this.BasicMethod(close);
                 }
             });
 
@@ -70,19 +75,28 @@ namespace WildberriesComparisonTable
             comparing.CompetitorComparing(response_product_json_client, response_product_json_competitor, excel_read.MyExcelTable, my_work_exc);
             //Is done
             this.progressBar1.Maximum = 100;
-            this.progressBar1.BeginInvoke((MethodInvoker)(() => 
+            this.progressBar1.BeginInvoke((MethodInvoker)(() =>
             {
                 for (int i = 0; i < progressBar1.Maximum; i++)
                 {
                     this.progressBar1.Value++;
                     System.Threading.Thread.Sleep(100);
                 }
+                //reset to zero
+                this.progressBar1.Value = 0;
             }));
             //"В процессе..." => "Готово!"
             this.label5.BackColor = System.Drawing.Color.GreenYellow;
-            this.label5.BeginInvoke((MethodInvoker)(() =>this.label5.Text = "Готово!"));
+            System.Threading.Thread.Sleep(300);
+            this.label5.BeginInvoke((MethodInvoker)(() => this.label5.Text = "Готово!"));
+            
             //Close if checkBox == false
             if (close) Invoke((MethodInvoker)(() => Close()));
+            else
+            {
+                this.label5.BackColor = System.Drawing.Color.White;
+                this.label5.BeginInvoke((MethodInvoker)(() => this.label5.Text = "в процессе..."));
+            }
         }
     }
 }
