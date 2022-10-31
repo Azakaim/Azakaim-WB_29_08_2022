@@ -31,29 +31,36 @@ namespace WildberriesComparisonTable
             string price_cl = String.Empty;
             string base_price_client = String.Empty;
             string name_prod_client = String.Empty;
+            //random for uniquess
+            var rand = new Random();
+            string[] letter = { "a", "b", "c", "d", "e" };
             Dictionary<string, string> str_name_and_base_price = new Dictionary<string, string>();
             var set_data_client = new ReadAndWriteExcel();
 
             foreach (var i in data_client.data.products)
             {
+                //for uniq key
+                var uniq = rand.NextDouble().ToString() + letter[rand.Next(letter.Length - 1)];
                 price_cl = Convert.ToString(i.salePriceU);
                 base_price_client = price_cl.Remove(price_cl.Length - 2);
                 name_prod_client = i.name;
-                str_name_and_base_price.Add(name_prod_client +"/id:"+ i.id, base_price_client);
+                str_name_and_base_price.Add(uniq + ";" + name_prod_client + "/id:" + i.id, base_price_client);
             }
             //Competitor
             var data_competitor = JsonConvert.DeserializeObject<Root>(json_data_competitor_product);
             string price_cmpttr = String.Empty;
-            string base_price_competitor =String.Empty;
+            string base_price_competitor = String.Empty;
             string name_prod_competitor = String.Empty;
             Dictionary<string, string> str_name_and_base_price_competitor = new Dictionary<string, string>();
             var set_data_competitor = new ReadAndWriteExcel();
             foreach (var i in data_competitor.data.products)
             {
+                //for uniq key
+                var uniq = rand.NextDouble().ToString() + letter[rand.Next(letter.Length - 1)];
                 price_cmpttr = Convert.ToString(i.salePriceU);
                 base_price_competitor = price_cmpttr.Remove(price_cmpttr.Length - 2);
                 name_prod_competitor = i.name;
-                str_name_and_base_price_competitor.Add(name_prod_competitor + "/id:" + i.id, base_price_competitor);
+                str_name_and_base_price_competitor.Add(uniq + ";" + name_prod_competitor + "/id:" + i.id, base_price_competitor);
             }
 
             //set data for client
@@ -94,7 +101,7 @@ namespace WildberriesComparisonTable
             string value_id_excel_client = String.Empty;
             string id_product_competitor = String.Empty;
             string value_id_excel_competitor = String.Empty;
-            //List for a diffence the price client
+            //List for a difference the price client
             string price_client_num = String.Empty;
             string price_competitor_num = String.Empty;
             for (int p = 2; p <= myworksheet.Dimension.Rows; p++)
@@ -105,8 +112,10 @@ namespace WildberriesComparisonTable
                 link_client.Add(link_cl);
                 link_competitor.Add(link_comp);
                 //sort price by article
-                sort_price_client_for_articul.Add(myworksheet.GetValue(p, 3).ToString());
-                sort_price_competitor_for_articul.Add(myworksheet.GetValue(p, 6).ToString());
+                if (myworksheet.GetValue(p, 3) is null) sort_price_client_for_articul.Add("0");
+                else sort_price_client_for_articul.Add(myworksheet.GetValue(p, 3).ToString());
+                if (myworksheet.GetValue(p, 6) is null) sort_price_competitor_for_articul.Add("0");
+                else sort_price_competitor_for_articul.Add(myworksheet.GetValue(p, 6).ToString());
             }
         }
 

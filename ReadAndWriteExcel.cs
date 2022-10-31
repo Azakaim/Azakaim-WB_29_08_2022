@@ -12,7 +12,8 @@ namespace WildberriesComparisonTable
 {
     public class ReadAndWriteExcel
     {
-        
+        static Dictionary<int, string> dict_ordery_client { get; set; }
+        static Dictionary<int, string> dict_ordery_competitor { get; set; }
         public ExcelPackage MyExcelTable { get; set; }
         
         public ExcelPackage CreateExcelPackage(string path_excel)
@@ -33,6 +34,10 @@ namespace WildberriesComparisonTable
         }
         public void ReadExcelAndGetJson(ExcelWorksheet MyWorkSheet, out string response_product_json_competitor, out string response_product_json_client)
         {
+            //for saving by order elements
+            ReadAndWriteExcel.dict_ordery_client = new Dictionary<int, string>();
+            ReadAndWriteExcel.dict_ordery_competitor = new Dictionary<int, string>();
+            int count_ordery = 1;
             //product
             List<string> articul_product_client = new List<string>();
             List<string> articul_product_competitor = new List<string>();
@@ -46,10 +51,17 @@ namespace WildberriesComparisonTable
             string url_cmpttr = String.Empty;
             for (int i = 2; i <= MyWorkSheet.Dimension.Rows; i++)
             {
+                //for ordered elements and match their pair
+                count_ordery++;
                 try
                 {
+                    if (MyWorkSheet.GetValue(i, 1) is null) break;
                     art_prod_client = MyWorkSheet.GetValue(i, 1).ToString().Trim(' ');
+                    if (art_prod_client == "") break;
+                    ReadAndWriteExcel.dict_ordery_client.Add(count_ordery, art_prod_client);
+
                     art_prod_competitor = MyWorkSheet.GetValue(i, 4).ToString().Trim(' ');
+                    ReadAndWriteExcel.dict_ordery_competitor.Add(count_ordery, art_prod_competitor);
                 }
                 catch (Exception)
                 {
@@ -102,11 +114,14 @@ namespace WildberriesComparisonTable
         /// <param name="price_competitor_all"></param>
         /// <param name="if_need_price_difference_client"></param>
         /// <param name="if_need_price_difference_competitor"></param>
-        public void WriteDataExcel(bool who_saler ,Dictionary<string, string> dict, ExcelPackage myexctable, ExcelWorksheet myworksheet )
+        public void WriteDataExcel(bool who_saler ,Dictionary<string, string> dict, ExcelPackage myexctable,ExcelWorksheet myworksheet)
         {
+            //dict for delete
+            Dictionary <int,string> dict_for_delete_client = ReadAndWriteExcel.dict_ordery_client;
+            Dictionary<int, string> dict_for_delete_competitor = ReadAndWriteExcel.dict_ordery_competitor;
             //Increment
-            int i = 2;
-            int j = 2;
+            int i = 0;
+            int j = 0;
             //Regex for id articul
             System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"(?<=/id:).*");
             //for comparing id articuls
@@ -120,50 +135,54 @@ namespace WildberriesComparisonTable
             {
                 #region for Client
                 case true:
-                foreach (var item in dict)
-                {
-                    for(int x = 0;x < myworksheet.Dimension.Rows;x++)
+                    foreach (var item in dict)
                     {
-                        //Comparison of the identifier from the table and the received identifier from wildberry
-                        id_product = regex.Match(item.Key).Value;
-                        value_id_excel = myworksheet.GetValue(i, 1).ToString();
-                        if (value_id_excel == id_product)
+                        foreach (var el in dict_for_delete_client)
                         {
-                            //set name
-                            myworksheet.SetValue(i, 2, item.Key);
-                            //set price
-                            myworksheet.SetValue(i, 3, item.Value);
-                            i = 1;
-                            break;
+                            //Comparison of the identifier from the table and the received identifier from wildberry
+                            id_product = regex.Match(item.Key).Value;
+                            
+                            if (el.Value == id_product)
+                            {
+                                i = el.Key;
+                                //set name
+                                var key_word_for_write = item.Key.Split(';')[1];//key withouth double num
+                                //set name
+                                myworksheet.SetValue(i, 2, key_word_for_write);
+                                //set price
+                                myworksheet.SetValue(i, 3, item.Value);
+                                dict_for_delete_client.Remove(el.Key);
+                                break;
+                            }
                         }
-                        else i++;
+                        
                     }
-                    i++;
-                }
-                break;
+                    break;
                 #endregion
 
                 #region for Competitor
                 case false:
                     foreach (var item2 in dict)
                     {
-                        for (int x = 0; x < myworksheet.Dimension.Rows; x++)
+                        foreach (var el in dict_for_delete_competitor)
                         {
                             //Comparison of the identifier from the table and the received identifier from wildberry
                             id_product = regex.Match(item2.Key).Value;
-                            value_id_excel = myworksheet.GetValue(j, 4).ToString();
-                            if (value_id_excel == id_product)
+                            
+                            if (el.Value == id_product)
                             {
+                                j = el.Key;
                                 //set name
-                                myworksheet.SetValue(j, 5, item2.Key);
+                                var key_word_for_write = item2.Key.Split(';')[1];//key withouth double num
+                                myworksheet.SetValue(j, 5, key_word_for_write);
                                 //set price
                                 myworksheet.SetValue(j, 6, item2.Value);
-                                j = 1;
+                                dict_for_delete_competitor.Remove(el.Key);
                                 break;
                             }
-                            else j++;
+                            
                         }
-                        j++;
+                        
                     }
                     break;
                     #endregion
